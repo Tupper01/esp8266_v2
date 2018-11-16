@@ -1,11 +1,18 @@
 /*****
 
- All the resources for this project:
- https://randomnerdtutorials.com/
+  All the resources for this project:
+  https://randomnerdtutorials.com/
 
 *****/
 
 // Loading the ESP8266WiFi library and the PubSubClient library
+#include <WiFiServerSecureBearSSL.h>
+#include <WiFiServerSecureAxTLS.h>
+#include <WiFiServerSecure.h>
+#include <WiFiClientSecureBearSSL.h>
+#include <WiFiClientSecureAxTLS.h>
+#include <CertStoreBearSSL.h>
+#include <BearSSLHelpers.h>
 #include <WiFiUdp.h>
 #include <WiFiServer.h>
 #include <WiFiClientSecure.h>
@@ -19,26 +26,27 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include "DHT.h"
+//#include "DHTesp.h"
 
 // Uncomment one of the lines bellow for whatever DHT sensor type you're using!
-//#define DHTTYPE DHT11   // DHT 11
+#define DHTTYPE DHT11   // DHT 11
 //#define DHTTYPE DHT21   // DHT 21 (AM2301)
-#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
+//#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
 
 // Change the credentials below, so your ESP8266 connects to your router
-const char* ssid = "Mune2006";
-const char* password = "Milmik0912";
+const char* ssid = "x232";
+const char* password = "x232device";
 
 // Change the variable to your Raspberry Pi IP address, so it connects to your MQTT broker
-const char* mqtt_server = "192.168.1.56";
+const char* mqtt_server = "192.168.0.114";
 
 // Initializes the espClient
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-// Connect an LED to each GPIO of your ESP8266
+// Connect a LED to each GPIO of your ESP8266
 const int ledGPIO5 = 5;
-const int ledGPIO4 = 4;
+const int ledGPIO4 = 0;
 
 // DHT Sensor
 const int DHTPin = 4;
@@ -68,7 +76,7 @@ void setup_wifi() {
 }
 
 // This functions is executed when some device publishes a message to a topic that your ESP8266 is subscribed to
-// Change the function below to add logic to your program, so when a device publishes a message to a topic that 
+// Change the function below to add logic to your program, so when a device publishes a message to a topic that
 // your ESP8266 is subscribed you can actually do something
 void callback(String topic, byte* message, unsigned int length) {
 	Serial.print("Message arrived on topic: ");
@@ -111,24 +119,24 @@ void callback(String topic, byte* message, unsigned int length) {
 }
 
 // This functions reconnects your ESP8266 to your MQTT broker
-// Change the function below if you want to subscribe to more topics with your ESP8266 
+// Change the function below if you want to subscribe to more topics with your ESP8266
 void reconnect() {
 	// Loop until we're reconnected
 	while (!client.connected()) {
 		Serial.print("Attempting MQTT connection...");
 		// Attempt to connect
-		 /*
-		 YOU  NEED TO CHANGE THIS NEXT LINE, IF YOU'RE HAVING PROBLEMS WITH MQTT MULTIPLE CONNECTIONS
-		 To change the ESP device ID, you will have to give a unique name to the ESP8266.
-		 Here's how it looks like now:
-		   if (client.connect("ESP8266Client")) {
-		 If you want more devices connected to the MQTT broker, you can do it like this:
-		   if (client.connect("ESPOffice")) {
-		 Then, for the other ESP:
-		   if (client.connect("ESPGarage")) {
+		/*
+		  YOU  NEED TO CHANGE THIS NEXT LINE, IF YOU'RE HAVING PROBLEMS WITH MQTT MULTIPLE CONNECTIONS
+		  To change the ESP device ID, you will have to give a unique name to the ESP8266.
+		  Here's how it looks like now:
+		  if (client.connect("ESP8266Client")) {
+		  If you want more devices connected to the MQTT broker, you can do it like this:
+		  if (client.connect("ESPOffice")) {
+		  Then, for the other ESP:
+		  if (client.connect("ESPGarage")) {
 		  That should solve your MQTT multiple connections problem
 
-		 THE SECTION IN loop() function should match your device name
+		  THE SECTION IN loop() function should match your device name
 		*/
 		if (client.connect("ESP8266Client")) {
 			Serial.println("connected");
@@ -161,7 +169,7 @@ void setup() {
 	client.setCallback(callback);
 }
 
-// For this project, you don't need to change anything in the loop function. 
+// For this project, you don't need to change anything in the loop function.
 // Basically it ensures that you ESP is connected to your broker
 void loop() {
 	if (!client.connected()) {
@@ -169,18 +177,18 @@ void loop() {
 	}
 	if (!client.loop())
 		/*
-		YOU  NEED TO CHANGE THIS NEXT LINE, IF YOU'RE HAVING PROBLEMS WITH MQTT MULTIPLE CONNECTIONS
-		To change the ESP device ID, you will have to give a unique name to the ESP8266.
-		Here's how it looks like now:
+		  YOU  NEED TO CHANGE THIS NEXT LINE, IF YOU'RE HAVING PROBLEMS WITH MQTT MULTIPLE CONNECTIONS
+		  To change the ESP device ID, you will have to give a unique name to the ESP8266.
+		  Here's how it looks like now:
 		  client.connect("ESP8266Client");
-		If you want more devices connected to the MQTT broker, you can do it like this:
+		  If you want more devices connected to the MQTT broker, you can do it like this:
 		  client.connect("ESPOffice");
-		Then, for the other ESP:
+		  Then, for the other ESP:
 		  client.connect("ESPGarage");
-		 That should solve your MQTT multiple connections problem
+		  That should solve your MQTT multiple connections problem
 
-		THE SECTION IN recionnect() function should match your device name
-	   */
+		  THE SECTION IN recionnect() function should match your device name
+		*/
 		client.connect("ESP8266Client");
 
 	now = millis();
@@ -194,10 +202,24 @@ void loop() {
 		// Read temperature as Fahrenheit (isFahrenheit = true)
 		float f = dht.readTemperature(true);
 
-		// Check if any reads failed and exit early (to try again).
-		if (isnan(h) || isnan(t) || isnan(f)) {
-			Serial.println("Failed to read from DHT sensor!");
-			return;
+		/*
+		 // Check if any reads failed and exit early (to try again).
+		 if (isnan(h) || isnan(t) || isnan(f)) {
+		   Serial.println("Failed to read from DHT sensor!");
+		   return;
+		 }
+		 */
+
+		if (isnan(h)) {
+			Serial.println("Unable to read humidity");
+		}
+
+		if (isnan(t)) {
+			Serial.println("Unable to read temperature (c)");
+		}
+
+		if (isnan(f)) {
+			Serial.println("Unable to read temperatur (f)");
 		}
 
 		// Computes temperature values in Celsius
@@ -205,7 +227,7 @@ void loop() {
 		static char temperatureTemp[7];
 		dtostrf(hic, 6, 2, temperatureTemp);
 
-		// Uncomment to compute temperature values in Fahrenheit 
+		// Uncomment to compute temperature values in Fahrenheit
 		// float hif = dht.computeHeatIndex(f, h);
 		// static char temperatureTemp[7];
 		// dtostrf(hic, 6, 2, temperatureTemp);
